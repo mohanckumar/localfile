@@ -4,8 +4,10 @@ import subprocess
 import re
 import json
 import threading
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)  
 
 # Configuration
 VALID_API_KEY = "5617c952-169c-4bf7-a92f-2600593f7c11"
@@ -18,20 +20,25 @@ OUTPUT_FILE = os.path.join(current_dir, "output.txt")     # Path to output.txt
 # Endpoint 1: Fetch Client URL from the File
 @app.route('/fetch_client_url', methods=['GET'])
 def fetch_client_url():
-    api_key = request.headers.get('Authorization')
-    if api_key is None:
-        return jsonify({"error": "API key is missing"}), 400
+    # Uncomment and modify the authorization check as needed
+    # api_key = request.headers.get('Authorization')
+    # if api_key is None:
+    #     return jsonify({"error": "API key is missing"}), 400
     
-    if api_key != f"Bearer {VALID_API_KEY}":
-        return jsonify({"error": "Invalid API key"}), 403
-    
+    # if api_key != f"Bearer {VALID_API_KEY}":
+    #     return jsonify({"error": "Invalid API key"}), 403
+
     if os.path.exists(OUTPUT_FILE):
         with open(OUTPUT_FILE, 'r') as file:
-            data = file.read()
-        return jsonify({"data": data}), 200
+            data = json.load(file)  # Load the JSON data from the file
+        url_is = data.get("UrlIs")  # Extract the value of "UrlIs"
+        
+        if url_is:
+            return url_is, 200  # Return the value of UrlIs as a plain string
+        else:
+            return "UrlIs not found in the file", 400
     else:
-        return jsonify({"error": "File not found"}), 404
-
+        return "File not found", 404
 @app.route('/openDesktopApp', methods=['POST'])
 def openDesktopApp():
     #api_key = request.headers.get('Authorization')
@@ -45,6 +52,10 @@ def openDesktopApp():
     
     subprocess.Popen(app_path)
     return "", 200
+
+@app.route('/fetch_hello', methods=['GET'])
+def fetch_hello():
+    return "hi", 200
 
 # ---------------------- SSH MONITOR FUNCTIONALITY --------------------------- #
 
@@ -63,7 +74,7 @@ def write_url_to_file(url):
 # Function to run the SSH command and monitor its output
 def monitor_ssh():
     #ssh_command = ["ssh", "-R", "4444:localhost:4444", "-R", "80:localhost:5000", "nokey@localhost.run"]
-    ssh_command = ["ssh", "-R", "80:localhost:5000", "nokey@localhost.run"]
+    ssh_command = ["ssh", "-R", "80:localhost:4444", "nokey@localhost.run"]
     print("Running SSH command...")
     process = subprocess.Popen(
         ssh_command,

@@ -42,8 +42,8 @@ def fetch_client_url():
 @app.route('/openDesktopApp', methods=['POST'])
 def openDesktopApp():
     #api_key = request.headers.get('Authorization')
-    #data = request.get_json()
-    #app_path = data['AppPath']
+    data = request.get_json()
+    app_path = data['AppPath']
     #if api_key is None:
     #    return jsonify({"error": "API key is missing"}), 400
     
@@ -74,7 +74,8 @@ def write_url_to_file(url):
 # Function to run the SSH command and monitor its output
 def monitor_ssh():
     #ssh_command = ["ssh", "-R", "4444:localhost:4444", "-R", "80:localhost:5000", "nokey@localhost.run"]
-    ssh_command = ["ssh", "-R", "80:localhost:4444", "nokey@localhost.run"]
+    #ssh_command = ["ssh", "-R", "80:localhost:4444", "nokey@localhost.run"]
+    ssh_command = ["ssh", "-R", "80:localhost:4444", "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", "nokey@localhost.run"]
     print("Running SSH command...")
     process = subprocess.Popen(
         ssh_command,

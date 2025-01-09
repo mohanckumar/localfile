@@ -102,9 +102,9 @@ def monitor_process(process, port_key, seen_urls, lock):
     process.stdout.close()
 
 def monitor_ssh():
-    ssh_command1 = ["ssh", "-R", "80:127.0.0.1:5123", "nokey@localhost.run"]
-    ssh_command2 = ["ssh", "-R", "80:127.0.0.1:4444", "nokey@localhost.run"]
-    ssh_command3 = ["ssh", "-R", "80:127.0.0.1:4723", "nokey@localhost.run"]
+    ssh_command1 = ["ssh", "-R", "80:127.0.0.1:5123","-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", "nokey@localhost.run"]
+    ssh_command2 = ["ssh", "-R", "80:127.0.0.1:4444","-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", "nokey@localhost.run"]
+    ssh_command3 = ["ssh", "-R", "80:127.0.0.1:4723","-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", "nokey@localhost.run"]
 
     print("Running SSH commands...")
 

@@ -58,9 +58,9 @@ def write_public_urls_to_file(mobile_url, web_url, local_agent_url):
     try:
         data = {
             "urls": {
-                "mobileurl": mobile_url,
-                "weburl": web_url,
-                "localagenturl": local_agent_url
+                "mobile_url": mobile_url,
+                "web_url": web_url,
+                "localagent_url": local_agent_url
             }
         }
         with open(OUTPUT_FILE, "w") as file:

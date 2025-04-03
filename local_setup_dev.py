@@ -133,7 +133,11 @@ def monitor_tunnelite():
                 except OSError:
                     pass
             break
-            
+# Function to extract the URL after "tunneled with tls termination,"
+def extract_url(line):
+    match = re.search(r"tunneled with tls termination, (https?://[^\s]+)", line)
+    return match.group(1) if match else None
+           
 @app.route('/getPublicUrl', methods=['GET'])
 def getPublicUrl():
     port = request.args.get('port')

@@ -15,7 +15,7 @@ CORS(app)
 # Configuration
 current_dir = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_FILE = os.path.join(current_dir, "output.json")
-TUNNELITE_PATH = os.path.expanduser(current_dir,"tunnelite.client.exe")  # Path to tunnelite.client.exe
+TUNNELITE_PATH = os.path.expanduser("~/Downloads/tunnelite.client.exe")  # Path to tunnelite.client.exe
 
 # --------------------------- FLASK ENDPOINTS -------------------------------- #
 

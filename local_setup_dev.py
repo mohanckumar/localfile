@@ -1,4 +1,3 @@
-  
 import subprocess
 import json
 import threading
@@ -15,7 +14,7 @@ CORS(app)
 # Configuration
 current_dir = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_FILE = os.path.join(current_dir, "output.json")
-TUNNELITE_PATH = os.path.expanduser("~/Downloads/tunnelite.client.exe")  # Path to tunnelite.client.exe
+TUNNELITE_PATH = os.path.join(current_dir, "tunnelite.client.exe")  # Path to tunnelite.client.exe
 
 # --------------------------- FLASK ENDPOINTS -------------------------------- #
 
@@ -83,6 +82,20 @@ def monitor_tunnelite_process(port, temp_file):
     except Exception as e:
         print(f"[ERROR] Failed to start tunnelite for port {port}: {e}")
         return None
+        
+def monitor_tunnelite_process_recording(port, temp_file):
+    """
+    Start tunnelite.client.exe and redirect output to a temp file.
+    """
+    try:
+        print(f"[INFO] Starting tunnelite.client.exe for port {port}")
+        command = f'cmd /k "{TUNNELITE_PATH} http://127.0.0.1:{port} > {temp_file} 2>&1"'
+        process = subprocess.Popen(command, shell=True)
+        print(f"[INFO] Started tunnelite.client.exe for port {port} (PID: {process.pid})")
+        return process  # Return process object to keep it alive
+    except Exception as e:
+        print(f"[ERROR] Failed to start tunnelite for port {port}: {e}")
+        return None
 
 def extract_public_url(file_path):
     """
@@ -133,37 +146,51 @@ def monitor_tunnelite():
                 except OSError:
                     pass
             break
+            
 # Function to extract the URL after "tunneled with tls termination,"
 def extract_url(line):
     match = re.search(r"tunneled with tls termination, (https?://[^\s]+)", line)
     return match.group(1) if match else None
+    
+def extract_public_url_recording(file_path):
+    """
+    Extract the public URL from the temp file content.
+    """
+    try:
+        if os.path.exists(file_path):
+            with open(file_path, 'r') as f:
+                content = f.read()
+            match = re.search(r'https://\S+\.tunnelite\.com', content)
+            return match.group(0) if match else None
+        return None
+    except Exception as e:
+        print(f"[ERROR] Failed to read {file_path}: {e}")
+        return None
            
 @app.route('/getPublicUrl', methods=['GET'])
 def getPublicUrl():
     port = request.args.get('port')
-    # Correct the string formatting in address to use the actual `port` variable
-    address = f"80:127.0.0.1:{port}"
- 
-    ssh_command1 = [
-        "ssh", "-R", address, 
-        "-o", "StrictHostKeyChecking=no", 
-        "-o", "UserKnownHostsFile=/dev/null", 
-        "nokey@localhost.run"
-    ]
-    process1 = subprocess.Popen(
-        ssh_command1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=0
-    )
-    print("output", process1.stdout.readline)
+    if not port:
+        return jsonify({"error": "Missing 'port' parameter"}), 400
+
+    temp_file = f"temp_{port}.txt"
+    monitor_tunnelite_process_recording(port, temp_file)
+
     public_url = None
-    # Iterate over the output of the SSH command
-    for line in iter(process1.stdout.readline, ""):
-        # Assuming extract_url is a function that processes the output to get the URL
-        print("line",line)
-        public_url = extract_url(line)
+    for _ in range(10):  # retry for ~10 seconds
+        time.sleep(1)
+        public_url = extract_public_url_recording(temp_file)
+        print(f"[INFO] public_url: {public_url})")
         if public_url:
-            break  # Return the first URL found and stop the iteration
+            break
+
+    try:
+        os.remove(temp_file)
+    except:
+        pass
+
     if not public_url:
-        return jsonify({"error": "Failed to retrieve public URL"}), 500
+        return jsonify({"error": "Failed to get public URL"}), 500
     # Step 3: Fetch WebSocket Debugger URL from Chrome DevTools API
     try:
         response = requests.get(f"http://localhost:{port}/json/version")
